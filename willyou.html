@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Be My Valentine?</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- General Setup --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #fff0f5 0%, #ffe4e1 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden; 
+            color: #5a5a5a;
+        }
+
+        /* --- Falling Flowers Animation --- */
+        .flower {
+            position: fixed;
+            top: -10vh;
+            z-index: 0; 
+            pointer-events: none;
+            animation: fall linear forwards;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* --- Main Container --- */
+        .container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 30px;
+            box-shadow: 0 10px 40px rgba(255, 143, 163, 0.3);
+            position: relative;
+            z-index: 10;
+            width: 90%;
+            max-width: 600px;
+            display: none; /* Hidden until name is entered */
+        }
+
+        h1 {
+            font-family: 'Dancing Script', cursive;
+            font-size: 3rem;
+            color: #d6336c;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        .sub-text {
+            font-size: 1.3rem;
+            margin-bottom: 30px;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        /* --- Buttons --- */
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 20px;
+            position: relative;
+            min-height: 60px; 
+            align-items: center;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.3s;
+            font-family: 'Quicksand', sans-serif;
+            text-transform: uppercase;
+        }
+
+        .btn-yes {
+            background-color: #ff8fa3;
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 143, 163, 0.5);
+            z-index: 30;
+        }
+
+        .btn-yes:hover {
+            transform: scale(1.1);
+            background-color: #ff7a92;
+        }
+
+        .btn-no {
+            background-color: #e0e0e0;
+            color: #5a5a5a;
+            position: absolute;
+            left: 60%;
+            z-index: 20;
+            transition: all 0.3s ease; 
+        }
+
+        /* Message below buttons */
+        .rizz-text {
+            color: #d6336c;
+            font-size: 1.1rem;
+            margin-top: 25px;
+            font-weight: bold;
+            min-height: 30px;
+            transition: opacity 0.5s;
+        }
+
+        /* --- ALL MODALS --- */
+        .modal-overlay {
+            display: flex; /* Flex by default for the Name modal */
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            width: 85%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border: 4px solid #ff8fa3;
+        }
+
+        /* Hide specific modals initially */
+        #quizModal, #successModal { display: none; }
+
+        input[type="text"] {
+            padding: 10px;
+            font-size: 1rem;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            margin: 15px 0;
+            width: 100%;
+            text-align: center;
+            outline: none;
+        }
+        input[type="text"]:focus { border-color: #ff8fa3; }
+
+        /* --- Success Modal Details --- */
+        .emojis-header { font-size: 3rem; margin-bottom: 20px; }
+        .details-list { text-align: left; margin-bottom: 20px; font-size: 1.1rem; }
+        .details-list p { margin-bottom: 12px; color: #555; border-bottom: 1px dashed #ffd1dc; padding-bottom: 5px;}
+        .details-list span { font-weight: bold; color: #d6336c; }
+        
+        .date-section h3 { font-size: 1.5rem; color: #666; font-weight: normal; }
+        .date-big { font-size: 5rem; font-weight: 700; color: #ff8fa3; line-height: 1; margin: 10px 0; }
+        
+        .color-options { display: flex; justify-content: center; gap: 10px; margin: 20px 0; }
+        .swatch { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: 0.2s; }
+        .swatch:hover { transform: scale(1.1); }
+        .swatch.selected { border-color: #555; transform: scale(1.1); }
+        
+        .s-pink { background: #ff8fa3; }
+        .s-lightpink { background: #ffd1dc; }
+        .s-black { background: #333; }
+        .s-mint { background: #a8e6cf; }
+        .s-lavender { background: #e6e6fa; }
+
+    </style>
+</head>
+<body>
+
+    <div id="flower-container"></div>
+
+    <div class="modal-overlay" id="nameModal">
+        <div class="modal-content">
+            <h2 style="color:#d6336c; margin-bottom:10px;">Hello! 🌸</h2>
+            <p style="color:#666;">Before we start, may I know your name?</p>
+            <input type="text" id="recipientNameInput" placeholder="Enter your name here...">
+            <button class="btn btn-yes" style="padding: 10px 20px; font-size: 1rem; width:100%;" onclick="submitName()">Enter</button>
+        </div>
+    </div>
+
+    <div class="container" id="mainContainer">
+        <h1 id="mainTitle">Will you be my Valentine?</h1>
+        
+        <p class="sub-text">
+            I, <strong id="askerName">Gabriel</strong>, am asking you to be my Valentine this February 14.
+        </p>
+
+        <div class="button-container">
+            <button class="btn btn-yes" id="yesBtn">YES</button>
+            <button class="btn btn-no" id="noBtn">NO</button>
+        </div>
+        
+        <p class="rizz-text" id="dynamicMessage">You may answer now 💕</p>
+    </div>
+
+    <div class="modal-overlay" id="quizModal">
+        <div class="modal-content">
+            <h2 style="color:#d6336c; margin-bottom:10px;">Security Check 🔒</h2>
+            <p style="font-size:0.9rem; color:#777; margin-bottom:20px;">
+                To click "No", you must answer correctly. <br>
+                <span style="color:red; font-weight:bold;">Warning: Wrong answer = Automatic YES!</span>
+            </p>
+            <p class="quiz-question" id="questionText">Question...</p>
+            <input type="text" id="quizAnswer" placeholder="Type your answer...">
+            <button class="btn btn-yes" style="padding: 10px 20px; font-size: 1rem; width:100%;" onclick="submitQuiz()">Submit Answer</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="successModal">
+        <div class="modal-content">
+            <div class="emojis-header">🌹💐🌹</div>
+            <h2 style="color:#d6336c; margin-bottom:15px;">Yay! It's a Date!</h2>
+            
+            <div class="details-list">
+                <p>Location: <span id="finalLocation">---</span></p>
+                <p>Time: <span id="finalTime">---</span></p>
+                <p>Outfit Color: <span style="font-weight:normal; color:#888;">(Pick below)</span></p>
+            </div>
+
+            <div class="date-section">
+                <h3>February</h3>
+                <div class="date-big">14</div>
+            </div>
+
+            <div class="color-options">
+                <div class="swatch s-pink" onclick="selectColor(this, 'Pink')"></div>
+                <div class="swatch s-lightpink" onclick="selectColor(this, 'Light Pink')"></div>
+                <div class="swatch s-black" onclick="selectColor(this, 'Black')"></div>
+                <div class="swatch s-mint" onclick="selectColor(this, 'Mint')"></div>
+                <div class="swatch s-lavender" onclick="selectColor(this, 'Lavender')"></div>
+            </div>
+            
+            <p style="font-size: 1rem; font-weight: bold; color:#555;">Selected: <span id="colorName">---</span></p>
+        </div>
+    </div>
+
+    <script>
+        // =================================================================
+        // ✨ CUSTOMIZE HERE ✨
+        // =================================================================
+        const MY_NAME = "Gabriel Matthew Zulueta"; 
+        const DATE_LOCATION = "SM Cabanatuan / Starbucks"; 
+        const DATE_TIME = "4:00 PM"; 
+
+        const TAGALOG_LINES = [
+            "Sige na please? 🥺",
+            "Para kang kape, hindi ako makatulog pag wala ka. ☕",
+            "Ayaw mo talaga? Masakit na ha. 💔",
+            "Google ka ba? Nasa iyo kasi lahat ng hinahanap ko. 🔍",
+            "Pagod ka na ba? Kanina ka pa kasi tumatakbo sa isip ko. 🏃‍♀️",
+            "Hindi tayo tao, hindi tayo hayop. Bagay tayo. 😉",
+            "Camera ka ba? Napapangiti kasi ako pag nakikita kita. 📸",
+            "Wag na magpakipot, 'Yes' na yan! 😘"
+        ];
+        // =================================================================
+
+        // Elements
+        const noBtn = document.getElementById('noBtn');
+        const yesBtn = document.getElementById('yesBtn');
+        const dynamicMessage = document.getElementById('dynamicMessage');
+        const flowerContainer = document.getElementById('flower-container');
+        
+        // Setup text
+        document.getElementById('askerName').innerText = MY_NAME;
+        document.getElementById('finalLocation').innerText = DATE_LOCATION;
+        document.getElementById('finalTime').innerText = DATE_TIME;
+
+        let hoverCount = 0;
+        let questionIndex = 0;
+        let isMessageFrozen = false; // Prevents "Rizz" from overwriting the success message
+
+        // --- NAME ENTRY LOGIC ---
+        function submitName() {
+            const nameInput = document.getElementById('recipientNameInput').value.trim();
+            if (nameInput !== "") {
+                // Update Title
+                document.getElementById('mainTitle').innerText = `Will you be my Valentine, ${nameInput}?`;
+                // Hide Modal
+                document.getElementById('nameModal').style.display = 'none';
+                // Show Main Card
+                document.getElementById('mainContainer').style.display = 'block';
+            } else {
+                alert("Please enter your pretty name! 😊");
+            }
+        }
+
+        // --- QUIZ QUESTIONS ---
+        const questions = [
+            { q: "What is 10 + 4?", a: ["14", "fourteen"] },
+            { q: "What color is a red rose?", a: ["red"] },
+            { q: "How many hearts do you have?", a: ["1", "one"] },
+            { q: "What comes after A?", a: ["b"] },
+            { q: "Is fire hot or cold?", a: ["hot"] }
+        ];
+
+        // --- 1. FALLING FLOWERS ---
+        function createFlower() {
+            const flower = document.createElement('div');
+            const icons = ['🌸', '🌹', '🌺', '🌷', '✨', '💖'];
+            flower.classList.add('flower');
+            flower.innerText = icons[Math.floor(Math.random() * icons.length)];
+            flower.style.left = Math.random() * 100 + 'vw';
+            flower.style.fontSize = Math.random() * 20 + 20 + 'px';
+            flower.style.animationDuration = Math.random() * 3 + 4 + 's';
+            flowerContainer.appendChild(flower);
+            setTimeout(() => { flower.remove(); }, 7000);
+        }
+        setInterval(createFlower, 300);
+
+        // --- 2. MESSAGE UPDATER (THE RIZZ) ---
+        function updateMessage() {
+            if (isMessageFrozen) return; // Don't change text if showing "Ang Galing!"
+
+            if (hoverCount < 3) {
+                dynamicMessage.innerText = "You may answer now 💕";
+                dynamicMessage.style.color = "#d6336c";
+            } else {
+                const randomLine = TAGALOG_LINES[Math.floor(Math.random() * TAGALOG_LINES.length)];
+                dynamicMessage.innerText = randomLine;
+                dynamicMessage.style.color = "#ff4d4d"; 
+            }
+        }
+
+        // --- 3. BUTTON MOVEMENT ---
+        noBtn.addEventListener('mouseover', function() {
+            if (hoverCount < 3) {
+                moveButton();
+                hoverCount++;
+                updateMessage();
+            }
+        });
+
+        noBtn.addEventListener('click', function() {
+            if (hoverCount >= 3) {
+                showNextQuestion();
+            } else {
+                moveButton(); 
+                hoverCount++;
+                updateMessage();
+            }
+        });
+
+        function moveButton() {
+            const x = Math.random() * (window.innerWidth - noBtn.offsetWidth - 50);
+            const y = Math.random() * (window.innerHeight - noBtn.offsetHeight - 50);
+            noBtn.style.position = 'fixed';
+            noBtn.style.left = Math.max(0, x) + 'px';
+            noBtn.style.top = Math.max(0, y) + 'px';
+        }
+
+        // --- 4. QUIZ LOGIC ---
+        function showNextQuestion() {
+            const currentQ = questions[questionIndex % questions.length];
+            document.getElementById('questionText').innerText = currentQ.q;
+            document.getElementById('quizAnswer').value = ""; 
+            document.getElementById('quizModal').style.display = 'flex';
+        }
+
+        function submitQuiz() {
+            const userAnswer = document.getElementById('quizAnswer').value.trim().toLowerCase();
+            const currentQ = questions[questionIndex % questions.length];
+            
+            if (currentQ.a.includes(userAnswer)) {
+                // --- CORRECT ANSWER ---
+                document.getElementById('quizModal').style.display = 'none';
+                questionIndex++;
+                moveButton();
+
+                // SHOW THE SPECIAL MESSAGE
+                dynamicMessage.innerText = "Ang galing! Pero Yes pa din dapat 😉";
+                dynamicMessage.style.color = "#28a745"; // Greenish for correct
+                
+                // Freeze the message so the Rizz/Mouseover doesn't kill it immediately
+                isMessageFrozen = true;
+                setTimeout(() => {
+                    isMessageFrozen = false;
+                    updateMessage(); // Go back to Rizz after 3 seconds
+                }, 3000);
+
+            } else {
+                // --- WRONG ANSWER ---
+                alert("WRONG ANSWER! 🚨\nPenalty: Automatic YES!");
+                document.getElementById('quizModal').style.display = 'none';
+                document.getElementById('successModal').style.display = 'flex';
+            }
+        }
+
+        // --- 5. YES BUTTON & COLOR ---
+        yesBtn.addEventListener('click', () => {
+            document.getElementById('successModal').style.display = 'flex';
+        });
+
+        function selectColor(element, colorName) {
+            document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+            element.classList.add('selected');
+            document.getElementById('colorName').innerText = colorName;
+        }
+
+    </script>
+</body>
+</html>
